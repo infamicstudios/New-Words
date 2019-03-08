@@ -2,7 +2,7 @@ import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
-from customWidgets import LanguageSwapButton, ButtonLineEdit, wordElement
+from customWidgets import ButtonLineEdit, wordElement
 import subprocess
 import regex as re
 import settings
@@ -29,7 +29,7 @@ class App(QMainWindow):
             self.DarkMode = False
         
         self.resultsmode = 'simple'
-
+        self.searchtype = ''
         self.initUI()
 
     def initUI(self):
@@ -46,7 +46,11 @@ class App(QMainWindow):
         self.search_le.setToolTip(tooltips.searchwidget_tp)
 
         # Create the Language Swap widget
-        self.tb.addWidget(LanguageSwapButton(self.DarkMode))
+        searchtype = QComboBox()
+        searchtype.addItem("Latin to English")
+        searchtype.addItem("English to Latin")
+        searchtype.currentTextChanged.connect(self.change_search_type)
+
 
         # Create the results style dropdown widget
         responsemode = QComboBox()
@@ -54,8 +58,10 @@ class App(QMainWindow):
         responsemode.addItem("Complex results")
         responsemode.currentTextChanged.connect(self.change_results_mode)
         responsemode.setToolTip(tooltips.resultsMode_tp)
+        
+        # Add the widgets to the toolbar
+        self.tb.addWidget(searchtype)
         self.tb.addWidget(responsemode)
-
         self.tb.addWidget(self.search_le)
 
         #create and configure the body container of the widget
@@ -75,6 +81,8 @@ class App(QMainWindow):
         
     def change_results_mode(self, value):
         self.resultsmode = value
+    def change_search_type(self, value):
+        self.searchtype = value
 
     def searchword(self):
         validdict = {}

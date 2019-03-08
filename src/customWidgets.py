@@ -103,38 +103,9 @@ class wordElement(QWidget):
         deleteButton = QPushButton("X", None)
         deleteButton.clicked.connect(self.remove)
         grid.addWidget(deleteButton, 0, 2, Qt.AlignLeft)
+    
     def remove(self):
         self.setParent(None)
-
-
-class LanguageSwapButton(QWidget):
-    
-    def __init__(self, darkmode=False, parent=None):
-        super(LanguageSwapButton, self).__init__(parent)
-        #QWidget.__init__(self, parent=parent)
-
-        layout = QHBoxLayout(self)
-
-
-        #svg from https://www.svgrepo.com/svg/208426/switch-swap
-        switch_path = '../resources/switch-swap-svgrepo-com.svg'
- 
-        
-        state_lbl = QLabel('English to Latin')
-
-        switch_icn = QIcon(switch_path) 
-        switch_btn = QPushButton(switch_icn, None,None)
-        
-        
-        # If using osx darkmode
-        if darkmode:
-            state_lbl.setStyleSheet("QLabel { color : white; }")
-            switch_btn.setStyleSheet("QPushButton {"
-                                     "border: none;"
-                                     "color : white;}")
-        layout.addWidget(state_lbl)
-        layout.addWidget(switch_btn)
-
 """class WordDefinition(QWidget):
 
     def __init__(self, word, definition, darkmode=False, parent=None):
