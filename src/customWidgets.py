@@ -106,6 +106,25 @@ class wordElement(QWidget):
     
     def remove(self):
         self.setParent(None)
+
+class ComplexWordElement(QWidget):
+    def __init__(self, response, darkmode=False, parent=None): 
+        super(ComplexWordElement, self).__init__(parent)
+
+        grid = QGridLayout(self)
+
+        contentsWidget = QLabel(response)
+        grid.addWidget(contentsWidget, 0, 0, Qt.AlignLeft)
+
+        deleteButton = QPushButton("X", None)
+        deleteButton.clicked.connect(self.remove)
+        grid.addWidget(deleteButton, 0, 1, Qt.AlignRight)
+
+    def remove(self):
+        self.setParent(None)
+
+
+
 """class WordDefinition(QWidget):
 
     def __init__(self, word, definition, darkmode=False, parent=None):

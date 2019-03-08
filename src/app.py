@@ -2,7 +2,7 @@ import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
-from customWidgets import ButtonLineEdit, wordElement
+from customWidgets import ButtonLineEdit, wordElement, ComplexWordElement
 import subprocess
 import regex as re
 import settings
@@ -28,8 +28,8 @@ class App(QMainWindow):
         else:
             self.DarkMode = False
         
-        self.resultsmode = 'simple'
-        self.searchtype = ''
+        self.resultsmode = 'Complex results'
+        self.searchtype = 'Latin to English'
         self.initUI()
 
     def initUI(self):
@@ -54,8 +54,8 @@ class App(QMainWindow):
 
         # Create the results style dropdown widget
         responsemode = QComboBox()
-        responsemode.addItem("Simple results")
         responsemode.addItem("Complex results")
+        responsemode.addItem("Simple results")
         responsemode.currentTextChanged.connect(self.change_results_mode)
         responsemode.setToolTip(tooltips.resultsMode_tp)
         
@@ -65,7 +65,6 @@ class App(QMainWindow):
         self.tb.addWidget(self.search_le)
 
         #create and configure the body container of the widget
-        
         self.center_container = QWidget()
         self.main_layout = QVBoxLayout()
 
@@ -88,10 +87,13 @@ class App(QMainWindow):
         validdict = {}
         word = ''+self.search_le.text()
         output = subprocess.check_output(['./words', word], cwd = '../resources/words/').decode("utf-8")
-        responses = response(output).parseresponse()
+        if self.resultsmode == "Complex results":
+            self.main_layout.addWidget(ComplexWordElement(output))
+        else:
+            responses = response(output).parseresponse()
 
-        for details in responses:
-            self.main_layout.addWidget(wordElement(details))
+            for details in responses:
+                self.main_layout.addWidget(wordElement(details))
 
 class response():
     def __init__(self, responsestr):
