@@ -123,7 +123,107 @@ class ComplexWordElement(QWidget):
     def remove(self):
         self.setParent(None)
 
+class toolbarDropdowns(QWidget):
+    def __init__(self, darkmode=False, parent=None): 
+        super(toolbarDropdowns, self).__init__(parent)
 
+        self.gridlayout = QGridLayout()
+        self.setLayout(self.gridlayout)
+
+        self.searchtype = QComboBox()
+        self.searchtype.setFrame(False)
+        self.searchtype.addItem("Latin to English")
+        self.searchtype.addItem("English to Latin")
+        self.searchtype.currentTextChanged.connect(self.change_response_type)
+
+        self.responsetype = QComboBox()
+        self.responsetype.setFrame(False)
+        self.responsetype.addItem("Simple results")
+        self.responsetype.addItem("Complex results")
+        #self.responsetype.currentTextChanged.connect(self.change_response_type)
+
+        self.gridlayout.addWidget(self.searchtype, 0,0)
+        self.gridlayout.addWidget(self.responsetype, 1,0)
+
+    def change_response_type(self, value):
+        # Because simple mode for English to Latin is not supported,
+        # automatically swap the user over to complex mode on change
+        self.responsetype.clear()
+        if value == 'English to Latin':
+            self.responsetype.addItem("Complex results")
+        elif value == 'Latin to English':
+            self.responsetype.addItem("Complex results")
+            self.responsetype.addItem("Simple results")
+            
+    def returndetails(self):
+        return(self.searchtype.currentText(), self.responsetype.currentText())
+
+class ButtonLineEdit(QLineEdit):
+    #Modified line edit class Containing a line edit and a search and clear button
+    buttonClicked = pyqtSignal(bool)
+
+    def __init__(self, icon_file, darkmode = False, parent=None):
+        super(ButtonLineEdit, self).__init__(parent)
+
+
+        # Use Special SVG's designed for Darkmode if it is being used
+        if darkmode:
+            old_icon_file = icon_file
+            icon_file = icon_file.split('/')
+            icon_file.insert(-1, 'Darkmode')
+            icon_file = '/'.join(icon_file)
+            if not os.path.isfile(icon_file):
+                icon_file = old_icon_file
+
+        
+        # Group containing the clear and search buttons 
+        self.buttongroup = QWidget(self)
+        self.buttongroupLayout = QGridLayout()
+        self.buttongroup.setLayout(self.buttongroupLayout)
+
+        # Create the clear button and use showclearbutton() to show/hide 
+        # it depending on if QLineEdit is not empty
+        self.clearbutton = QPushButton('X')
+        self.clearbutton.setToolTip(tooltips.searchclear_tp)
+        self.clearbutton.setStyleSheet('border: 0px; padding: 0px;')
+        self.clearbutton.setCursor(Qt.ArrowCursor)
+        self.clearbutton.clicked.connect(self.clearentry)
+        self.textChanged.connect(self.showclearbutton)
+        
+        # The Search button
+        self.Searchbutton = QToolButton()
+        self.Searchbutton.setIcon(QIcon(icon_file))
+        self.Searchbutton.setToolTip(tooltips.search_tp)
+        self.Searchbutton.setStyleSheet('border: 0px; padding: 0px;')
+        self.Searchbutton.setCursor(Qt.ArrowCursor)
+        self.Searchbutton.clicked.connect(self.buttonClicked.emit)
+
+        self.buttongroupLayout.addWidget(self.clearbutton, 0, 0)
+        self.buttongroupLayout.addWidget(self.Searchbutton, 0, 1, Qt.AlignRight)
+
+        # Make sure styling is correct no matter the window size
+        frameWidth = self.style().pixelMetric(QStyle.PM_DefaultFrameWidth)
+        buttonSize = self.buttongroup.sizeHint()
+
+        self.setStyleSheet('QLineEdit {padding-right: %dpx; }' % (buttonSize.width() + frameWidth + 1))
+        self.setMinimumSize(max(self.minimumSizeHint().width(), buttonSize.width() + frameWidth*2 + 2),
+                            max(self.minimumSizeHint().height(), buttonSize.height() + frameWidth*2 + 2))
+
+    def resizeEvent(self, event):
+        buttonSize = self.buttongroup.sizeHint()
+        frameWidth = self.style().pixelMetric(QStyle.PM_DefaultFrameWidth)
+        self.buttongroup.move(self.rect().right() - frameWidth - buttonSize.width(),
+                         (self.rect().bottom() - buttonSize.height() + 1)/2)
+
+        super(ButtonLineEdit, self).resizeEvent(event)
+
+    def clearentry(self):
+        self.clear()
+
+    def showclearbutton(self):
+        self.clearbutton.show() if len(self.text()) > 0 else self.clearbutton.hide()
+    
+    
 
 """class WordDefinition(QWidget):
 
@@ -192,67 +292,3 @@ class ComplexWordElement(QWidget):
         self.close()"""
         
 
-class ButtonLineEdit(QLineEdit):
-    #Modified line edit class Containing a line edit and a search and clear button
-    buttonClicked = pyqtSignal(bool)
-
-    def __init__(self, icon_file, darkmode = False, parent=None):
-        super(ButtonLineEdit, self).__init__(parent)
-
-
-        # Use Special SVG's designed for Darkmode if it is being used
-        if darkmode:
-            old_icon_file = icon_file
-            icon_file = icon_file.split('/')
-            icon_file.insert(-1, 'Darkmode')
-            icon_file = '/'.join(icon_file)
-            if not os.path.isfile(icon_file):
-                icon_file = old_icon_file
-
-        
-        # Group containing the clear and search buttons 
-        self.buttongroup = QWidget(self)
-        self.buttongroupLayout = QGridLayout()
-        self.buttongroup.setLayout(self.buttongroupLayout)
-
-        # Create the clear button and use showclearbutton() to show/hide 
-        # it depending on if QLineEdit is not empty
-        self.clearbutton = QPushButton('X')
-        self.clearbutton.setToolTip(tooltips.searchclear_tp)
-        self.clearbutton.setStyleSheet('border: 0px; padding: 0px;')
-        self.clearbutton.setCursor(Qt.ArrowCursor)
-        self.clearbutton.clicked.connect(self.clearentry)
-        self.textChanged.connect(self.showclearbutton)
-        
-        # The Search button
-        self.Searchbutton = QToolButton()
-        self.Searchbutton.setIcon(QIcon(icon_file))
-        self.Searchbutton.setToolTip(tooltips.search_tp)
-        self.Searchbutton.setStyleSheet('border: 0px; padding: 0px;')
-        self.Searchbutton.setCursor(Qt.ArrowCursor)
-        self.Searchbutton.clicked.connect(self.buttonClicked.emit)
-
-        self.buttongroupLayout.addWidget(self.clearbutton, 0, 0)
-        self.buttongroupLayout.addWidget(self.Searchbutton, 0, 1, Qt.AlignRight)
-
-        # Make sure styling is correct no matter the window size
-        frameWidth = self.style().pixelMetric(QStyle.PM_DefaultFrameWidth)
-        buttonSize = self.buttongroup.sizeHint()
-
-        self.setStyleSheet('QLineEdit {padding-right: %dpx; }' % (buttonSize.width() + frameWidth + 1))
-        self.setMinimumSize(max(self.minimumSizeHint().width(), buttonSize.width() + frameWidth*2 + 2),
-                            max(self.minimumSizeHint().height(), buttonSize.height() + frameWidth*2 + 2))
-
-    def resizeEvent(self, event):
-        buttonSize = self.buttongroup.sizeHint()
-        frameWidth = self.style().pixelMetric(QStyle.PM_DefaultFrameWidth)
-        self.buttongroup.move(self.rect().right() - frameWidth - buttonSize.width(),
-                         (self.rect().bottom() - buttonSize.height() + 1)/2)
-
-        super(ButtonLineEdit, self).resizeEvent(event)
-
-    def clearentry(self):
-        self.clear()
-
-    def showclearbutton(self):
-        self.clearbutton.show() if len(self.text()) > 0 else self.clearbutton.hide()

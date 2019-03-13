@@ -2,7 +2,7 @@ import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
-from customWidgets import ButtonLineEdit, wordElement, ComplexWordElement
+from customWidgets import ButtonLineEdit, wordElement, ComplexWordElement, toolbarDropdowns
 import subprocess
 import regex as re
 import settings
@@ -13,7 +13,6 @@ class App(QMainWindow):
         super().__init__()
 
         self.title = settings.title
-
         self.left = settings.left
         self.top = settings.top
         self.width = settings.width
@@ -45,26 +44,18 @@ class App(QMainWindow):
         self.search_le.setPlaceholderText('Search')
         self.search_le.setToolTip(tooltips.searchwidget_tp)
 
-        # Create the Language Swap widget
-        searchtype = QComboBox()
-        searchtype.addItem("Latin to English")
-        searchtype.addItem("English to Latin")
-        searchtype.currentTextChanged.connect(self.change_search_type)
+        searchdetails = QWidget()
+        searchdetailsLayout = QGridLayout()
+        searchdetails.setLayout(searchdetailsLayout)
 
+        # Create the Language swap and results style dropdown widgets
+        self.searchdets = toolbarDropdowns()
 
-        # Create the results style dropdown widget
-        responsemode = QComboBox()
-        responsemode.addItem("Complex results")
-        responsemode.addItem("Simple results")
-        responsemode.currentTextChanged.connect(self.change_results_mode)
-        responsemode.setToolTip(tooltips.resultsMode_tp)
-        
-        # Add the widgets to the toolbar
-        self.tb.addWidget(searchtype)
-        self.tb.addWidget(responsemode)
+        self.tb.addWidget(self.searchdets)
+
         self.tb.addWidget(self.search_le)
 
-        #create and configure the body container of the widget
+        # Create and configure the body container of the widget
         self.center_container = QWidget()
         self.main_layout = QVBoxLayout()
 
@@ -81,19 +72,52 @@ class App(QMainWindow):
     def change_results_mode(self, value):
         self.resultsmode = value
     def change_search_type(self, value):
+        # Because simple mode for English to Latin is not supported,
+        # automatically swap the user over to complex mode on change
+        self.responsemode.clear()
+        if value == 'English to Latin':
+            self.responsemode.addItem("Complex results")
+        elif value == 'Latin to English':
+            self.responsemode.addItem("Complex results")
+            self.responsemode.addItem("Simple results")
+
         self.searchtype = value
 
     def searchword(self):
+        searchtype, resultsmode = self.searchdets.returndetails()
+
         validdict = {}
         word = ''+self.search_le.text()
-        output = subprocess.check_output(['./words', word], cwd = '../resources/words/').decode("utf-8")
-        if self.resultsmode == "Complex results":
+        output = subprocess.check_output(['./words', word], cwd = '../resources/words/')
+        if searchtype == 'Latin to English':
+            output = subprocess.check_output(['./words', word], cwd = '../resources/words/')
+        if searchtype == 'English to Latin':
+            output = subprocess.check_output(['./words', '-E', word], cwd = '../resources/words/')
+        output = output.decode("utf-8")
+        if resultsmode == "Complex results" :
             self.main_layout.addWidget(ComplexWordElement(output))
         else:
             responses = response(output).parseresponse()
+            wordheader = QWidget()
+            header_layout = QGridLayout()
+            wordheader.setLayout(header_layout)
+            header_layout.addWidget(QLabel(self.search_le.text()), 0, 0)
+            minimizeButton = QPushButton('Collapse')
+            
+            header_layout.addWidget(minimizeButton, 0, 1)
 
+            contentWidget = QWidget()
+            contentGrid =  QVBoxLayout()
+            contentWidget.setLayout(contentGrid)
+
+            header_layout.addWidget(contentWidget, 1, 0)
+
+            self.main_layout.addWidget(wordheader)
             for details in responses:
-                self.main_layout.addWidget(wordElement(details))
+                contentGrid.addWidget(wordElement(details))
+                #self.main_layout.addWidget(wordElement(details))
+
+
 
 class response():
     def __init__(self, responsestr):
@@ -107,7 +131,7 @@ class response():
         for line in responselst:
             matched = False
 
-            ######### READ WORD VALUES FROM OUTPUT BASED ON THE WORD TYPE #########
+            ######### READ WORD VALUES OF LATIN WORDS FROM OUTPUT BASED ON THE WORD TYPE #########
 
             # Match adjective template
             groups = re.match('(\w+)(?:\.(\w+))?\s+ADJ\s+(\d)\s+(\d)\s+(\w+)\s+(\w+)\s+(\w+)\s+(\w+)', line)
@@ -203,7 +227,7 @@ class response():
 
         return self.elements
 
-    # Could put this the custom widget and it would be cleaner
+    # Could put this into the custom widget and it would be cleaner
     # but it makes more sense for it to be here.
     def cleanelements(self):
         word_details_key = ['stem', 'ending', 'code1', 'code2', 'form1',
@@ -221,7 +245,6 @@ class response():
             newelements.append(cleanedup)
 
         self.elements = newelements
-
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
