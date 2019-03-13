@@ -2,7 +2,7 @@ import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
-from customWidgets import ButtonLineEdit, wordElement, ComplexWordElement, toolbarDropdowns
+from customWidgets import ButtonLineEdit, wordElement, ComplexWordElement, toolbarDropdowns, definition
 import subprocess
 import regex as re
 import settings
@@ -88,12 +88,14 @@ class App(QMainWindow):
 
         validdict = {}
         word = ''+self.search_le.text()
-        output = subprocess.check_output(['./words', word], cwd = '../resources/words/')
-        if searchtype == 'Latin to English':
-            output = subprocess.check_output(['./words', word], cwd = '../resources/words/')
-        if searchtype == 'English to Latin':
-            output = subprocess.check_output(['./words', '-E', word], cwd = '../resources/words/')
-        output = output.decode("utf-8")
+        command = ['./words', word] if searchtype == 'Latin to English' else ['./words', '-E', word]
+        output = subprocess.check_output(command, cwd = '../resources/words/').decode("utf-8")
+        
+        #if resultsmode == 'Complex results':
+            #self.main_layout.addWidget(wordgroup(self.search_le.text(), response(output).parseresponse(), True))
+       # elif resultsmode == 'Simple results':
+            #self.main_layout.addWidget(wordgroup(self.search_le.text(), output))
+        """
         if resultsmode == "Complex results" :
             self.main_layout.addWidget(ComplexWordElement(output))
         else:
@@ -102,9 +104,6 @@ class App(QMainWindow):
             header_layout = QGridLayout()
             wordheader.setLayout(header_layout)
             header_layout.addWidget(QLabel(self.search_le.text()), 0, 0)
-            minimizeButton = QPushButton('Collapse')
-            
-            header_layout.addWidget(minimizeButton, 0, 1)
 
             contentWidget = QWidget()
             contentGrid =  QVBoxLayout()
@@ -114,10 +113,8 @@ class App(QMainWindow):
 
             self.main_layout.addWidget(wordheader)
             for details in responses:
-                contentGrid.addWidget(wordElement(details))
-                #self.main_layout.addWidget(wordElement(details))
-
-
+                contentGrid.addWidget(wordElement(details))"""
+        self.main_layout.addWidget(definition(self.search_le.text(), output))
 
 class response():
     def __init__(self, responsestr):

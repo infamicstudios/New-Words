@@ -11,7 +11,74 @@ def calculateTextSize(string, font):
     return boundingBox.width(), boundingBox.height()
 
 
+class definition(QWidget):
+    def __init__(self, word, response, simple=False, darkmode=False, parent=None):
+        super(definition, self).__init__(parent)
 
+        #  |-----------------definition_header-------------------------|
+        #  ||----------------|  |------------------|  |--------------| |
+        #  ||     Title      |  |  collapsebutton  |  |  CloseButton | |
+        #  ||----------------|  |------------------|  |--------------| |
+        #  |-----------------------------------------------------------|
+        #  |                                                           |
+        #  |                                                           |
+        #  |                   contentWidget                           |
+        #  |                                                           |
+        #  |                                                           |
+        #  |-----------------------------------------------------------|
+
+        #The overall layout for the whole widget
+        definitionLayout = QGridLayout()
+        self.setLayout(definitionLayout)
+
+        # A header containing the word and expand/collapse and close buttons
+        definition_header = QWidget()
+        definition_header_layout= QGridLayout()
+        definition_header.setLayout(definition_header_layout)
+        
+
+        title = QLabel(word)
+        self.collapsebutton = QPushButton('Collapse', None)
+        self.collapsebutton.setToolTip("Show the details of this word")
+        self.collapsebutton.clicked.connect(self.showDetails)
+
+        closebutton = QPushButton('X', None)
+        closebutton.setToolTip("Delete this definition from history")
+        closebutton.clicked.connect(self.remove)
+
+        definition_header_layout.addWidget(title, 0, 0)
+        definition_header_layout.addWidget(self.collapsebutton, 0, 1)
+        definition_header_layout.addWidget(closebutton, 0, 2)
+
+        definitionLayout.addWidget(definition_header)
+
+        # END OF HEADER
+
+        # The Widget containing the actual definition 
+        self.contentWidget = QWidget()
+        contentlayout = QGridLayout()
+        self.contentWidget.setLayout(contentlayout)
+        definitionLayout.addWidget(self.contentWidget, 1, 0)
+
+        # For now always assume complex results
+        definitionLabel = QLabel(response)
+        contentlayout.addWidget(definitionLabel, 0, 0)
+
+    #Function that runs when the user expands on collapses the word details
+    def showDetails(self):
+        if self.contentWidget.isHidden():
+            self.contentWidget.show() 
+            self.collapsebutton.setText("Collapse")
+            self.collapsebutton.setToolTip("Hide the details of this word") 
+        else:
+            self.contentWidget.hide()
+            self.collapsebutton.setText("Show")
+            self.collapsebutton.setToolTip("Show the details of this word") 
+        #self.collapsebutton.setText("Expand") if self.contentWidget.isHidden() else self.collapsebutton.setText("Collapse")
+    def remove(self):
+        self.setParent(None)
+
+    
 
 
 class wordElement(QWidget):
@@ -129,6 +196,7 @@ class toolbarDropdowns(QWidget):
 
         self.gridlayout = QGridLayout()
         self.setLayout(self.gridlayout)
+        self.gridlayout.setVerticalSpacing(1)
 
         self.searchtype = QComboBox()
         self.searchtype.setFrame(False)
@@ -140,10 +208,9 @@ class toolbarDropdowns(QWidget):
         self.responsetype.setFrame(False)
         self.responsetype.addItem("Simple results")
         self.responsetype.addItem("Complex results")
-        #self.responsetype.currentTextChanged.connect(self.change_response_type)
 
-        self.gridlayout.addWidget(self.searchtype, 0,0)
-        self.gridlayout.addWidget(self.responsetype, 1,0)
+        self.gridlayout.addWidget(self.searchtype, 0,0, Qt.AlignBottom )
+        self.gridlayout.addWidget(self.responsetype, 1,0, Qt.AlignTop)
 
     def change_response_type(self, value):
         # Because simple mode for English to Latin is not supported,
