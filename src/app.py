@@ -58,9 +58,14 @@ class App(QMainWindow):
         # Create and configure the body container of the widget
         self.center_container = QWidget()
         self.main_layout = QVBoxLayout()
+        
 
         self.setCentralWidget(self.center_container)
         self.center_container.setLayout(self.main_layout)
+
+        recommendedSize = self.center_container.sizeHint()
+        self.spacer = QSpacerItem(recommendedSize.width(), recommendedSize.height(), QSizePolicy.Minimum, QSizePolicy.Expanding)
+        self.main_layout.addItem(self.spacer)
 
         #create the window title and size
         self.setWindowTitle(self.title)
@@ -91,11 +96,17 @@ class App(QMainWindow):
         command = ['./words', word] if searchtype == 'Latin to English' else ['./words', '-E', word]
         output = subprocess.check_output(command, cwd = '../resources/words/').decode("utf-8")
         
+        self.main_layout.addWidget(definition(self.search_le.text(), output))
+
+        self.main_layout.removeItem(self.spacer)
+        self.main_layout.addItem(self.spacer)
+        
+        """
         #if resultsmode == 'Complex results':
             #self.main_layout.addWidget(wordgroup(self.search_le.text(), response(output).parseresponse(), True))
        # elif resultsmode == 'Simple results':
             #self.main_layout.addWidget(wordgroup(self.search_le.text(), output))
-        """
+        
         if resultsmode == "Complex results" :
             self.main_layout.addWidget(ComplexWordElement(output))
         else:
@@ -114,7 +125,7 @@ class App(QMainWindow):
             self.main_layout.addWidget(wordheader)
             for details in responses:
                 contentGrid.addWidget(wordElement(details))"""
-        self.main_layout.addWidget(definition(self.search_le.text(), output))
+        
 
 class response():
     def __init__(self, responsestr):

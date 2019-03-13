@@ -15,6 +15,11 @@ class definition(QWidget):
     def __init__(self, word, response, simple=False, darkmode=False, parent=None):
         super(definition, self).__init__(parent)
 
+        #Get the background color and create a version of it that is slightly darker
+        backgroundcolorHex = self.palette().color(self.backgroundRole()).name()[1:]
+        backgroundcolorHex = tuple(int(int(backgroundcolorHex[i:i+2])/1.1) for i in range(0, len(backgroundcolorHex), 2))
+        backgroundcolorHex = '#'+''.join(str(x) for x in backgroundcolorHex)
+
         #  |-----------------definition_header-------------------------|
         #  ||----------------|  |------------------|  |--------------| |
         #  ||     Title      |  |  collapsebutton  |  |  CloseButton | |
@@ -46,9 +51,13 @@ class definition(QWidget):
         closebutton.setToolTip("Delete this definition from history")
         closebutton.clicked.connect(self.remove)
 
-        definition_header_layout.addWidget(title, 0, 0)
-        definition_header_layout.addWidget(self.collapsebutton, 0, 1)
-        definition_header_layout.addWidget(closebutton, 0, 2)
+        #optionsbutton = QPushButton('⋮', None)
+
+
+        definition_header_layout.addWidget(title, 0, 0, Qt.AlignLeft)
+        definition_header_layout.addWidget(self.collapsebutton, 0, 1, Qt.AlignRight)
+        #definition_header_layout.addWidget(optionsbutton, 0, 2, Qt.AlignRight)
+        definition_header_layout.addWidget(closebutton, 0, 3, Qt.AlignRight)
 
         definitionLayout.addWidget(definition_header)
 
@@ -56,7 +65,10 @@ class definition(QWidget):
 
         # The Widget containing the actual definition 
         self.contentWidget = QWidget()
+        self.contentWidget.setStyleSheet("background-color:{darkerbackground};".format(darkerbackground=backgroundcolorHex))
+        
         contentlayout = QGridLayout()
+        contentlayout.setSpacing(0)
         self.contentWidget.setLayout(contentlayout)
         definitionLayout.addWidget(self.contentWidget, 1, 0)
 
@@ -74,7 +86,7 @@ class definition(QWidget):
             self.contentWidget.hide()
             self.collapsebutton.setText("Show")
             self.collapsebutton.setToolTip("Show the details of this word") 
-        #self.collapsebutton.setText("Expand") if self.contentWidget.isHidden() else self.collapsebutton.setText("Collapse")
+        
     def remove(self):
         self.setParent(None)
 
