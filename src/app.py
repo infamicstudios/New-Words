@@ -56,12 +56,17 @@ class App(QMainWindow):
         self.tb.addWidget(self.search_le)
 
         # Create and configure the body container of the widget
+        self.scroll_area = QScrollArea()
         self.center_container = QWidget()
         self.main_layout = QVBoxLayout()
+        self.center_container.setLayout(self.main_layout)
         
 
-        self.setCentralWidget(self.center_container)
-        self.center_container.setLayout(self.main_layout)
+        self.scroll_area.setWidget(self.center_container)
+        self.scroll_area.setWidgetResizable(True)
+
+        self.setCentralWidget(self.scroll_area)
+        
 
         recommendedSize = self.center_container.sizeHint()
         self.spacer = QSpacerItem(recommendedSize.width(), recommendedSize.height(), QSizePolicy.Minimum, QSizePolicy.Expanding)
@@ -95,11 +100,16 @@ class App(QMainWindow):
         word = ''+self.search_le.text()
         command = ['./words', word] if searchtype == 'Latin to English' else ['./words', '-E', word]
         output = subprocess.check_output(command, cwd = '../resources/words/').decode("utf-8")
-        
-        self.main_layout.addWidget(definition(self.search_le.text(), output))
+        definition_entry = definition(self.search_le.text(), output)
 
+        self.main_layout.addWidget(definition_entry)
+
+        #self.scroll_area.ensureWidgetVisible(definition_entry)
+
+        # Have to re-add the spacer to the bottom.
         self.main_layout.removeItem(self.spacer)
         self.main_layout.addItem(self.spacer)
+        
         
         """
         #if resultsmode == 'Complex results':
