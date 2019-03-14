@@ -10,6 +10,14 @@ def calculateTextSize(string, font):
 
     return boundingBox.width(), boundingBox.height()
 
+class ExpandButton(QToolButton):
+    def __init__(self, parent=None):
+        super(CircleButton, self).__init__(parent)
+        #self.setStyleSheet('''border-image: url("imagen.jpg")''')
+
+    #def resizeEvent(self, event):
+        #self.setMask(QRegion(self.rect(), QRegion.Ellipse))
+        #QToolButton.resizeEvent(self, event)
 
 class definition(QWidget):
     def __init__(self, word, response, simple=False, darkmode=False, parent=None):
@@ -19,6 +27,8 @@ class definition(QWidget):
         backgroundcolorHex = self.palette().color(self.backgroundRole()).name()[1:]
         backgroundcolorHex = tuple(int(int(backgroundcolorHex[i:i+2])/1.1) for i in range(0, len(backgroundcolorHex), 2))
         backgroundcolorHex = '#'+''.join(str(x) for x in backgroundcolorHex)
+        background_dark = backgroundcolorHex
+        background_light = self.palette().color(self.backgroundRole()).name()
 
         #  |-----------------definition_header-------------------------|
         #  ||----------------|  |------------------|  |--------------| |
@@ -43,16 +53,37 @@ class definition(QWidget):
         
 
         title = QLabel(word)
-        self.collapsebutton = QPushButton('Collapse', None)
+        #Images from https://visualpharm.com/free-icons/collapse%20arrow-595b40b65ba036ed117d1768
+        # and https://visualpharm.com/free-icons/expand%20arrow-595b40b65ba036ed117d1765
+
+        self.collapsebutton = QToolButton()
+        self.collapsebutton.setFixedSize(QSize(30,30))
+        self.collapsebutton.setIcon(QIcon('../resources/Collapse.svg'))
+        self.collapsebutton.setStyleSheet(
+            'QToolButton {'
+                'background-color:'+background_dark+';'
+                'border-radius: 15px;'
+            '}'
+            'QToolButton:hover {'
+                'background-color:'+background_dark+';'
+                'border: 1px solid green;'
+            '}')
         self.collapsebutton.setToolTip("Show the details of this word")
         self.collapsebutton.clicked.connect(self.showDetails)
 
-        closebutton = QPushButton('X', None)
-        closebutton.setToolTip("Delete this definition from history")
+        closebutton = QPushButton('X')
+        closebutton.setFixedSize(QSize(30,30))
+        closebutton.setStyleSheet(
+            'QPushButton {'
+                'background-color:'+background_dark+';'
+                'border-radius: 15px;'
+            '}'
+            'QPushButton:hover {'
+                'background-color:'+background_dark+';'
+                'border: 1px solid red;'
+            '}')
+        closebutton.setToolTip("Remove")
         closebutton.clicked.connect(self.remove)
-
-        #optionsbutton = QPushButton('⋮', None)
-
 
         definition_header_layout.addWidget(title, 0, 0, Qt.AlignLeft)
         definition_header_layout.addWidget(self.collapsebutton, 0, 1, Qt.AlignRight)
@@ -79,13 +110,14 @@ class definition(QWidget):
     #Function that runs when the user expands on collapses the word details
     def showDetails(self):
         if self.contentWidget.isHidden():
-            self.contentWidget.show() 
-            self.collapsebutton.setText("Collapse")
-            self.collapsebutton.setToolTip("Hide the details of this word") 
+            self.contentWidget.show()
+            self.collapsebutton.setIcon(QIcon('../resources/Collapse.svg'))
+        
+            self.collapsebutton.setToolTip("Collapse") 
         else:
             self.contentWidget.hide()
-            self.collapsebutton.setText("Show")
-            self.collapsebutton.setToolTip("Show the details of this word") 
+            self.collapsebutton.setIcon(QIcon('../resources/Expand.svg'))
+            self.collapsebutton.setToolTip("Expand") 
         
     def remove(self):
         self.setParent(None)
@@ -265,6 +297,7 @@ class ButtonLineEdit(QLineEdit):
         self.clearbutton = QPushButton('X')
         self.clearbutton.setToolTip(tooltips.searchclear_tp)
         self.clearbutton.setStyleSheet('border: 0px; padding: 0px;')
+
         self.clearbutton.setCursor(Qt.ArrowCursor)
         self.clearbutton.clicked.connect(self.clearentry)
         self.textChanged.connect(self.showclearbutton)
