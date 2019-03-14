@@ -1,3 +1,4 @@
+#TODO: ACTUALLY IMPORT EVERYTHING FROM INSTEAD OF BEING LAZY
 import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
@@ -22,8 +23,11 @@ class App(QMainWindow):
 
         # Detect if using OSX dark mode for element styling
         if self.platform == 'darwin':
-            self.DarkMode = True if subprocess.check_output(["defaults", 'read', '-g',
-            'AppleInterfaceStyle']).decode("utf-8")  == 'Dark\n' else False
+            try:
+                self.DarkMode = True if subprocess.check_output(["defaults", 'read', '-g',
+                'AppleInterfaceStyle']).decode("utf-8")  == 'Dark\n' else False
+            except:
+                self.DarkMode = False
         else:
             self.DarkMode = False
         
@@ -106,34 +110,7 @@ class App(QMainWindow):
 
         # Have to re-add the spacer to the bottom.
         self.main_layout.removeItem(self.spacer)
-        self.main_layout.addItem(self.spacer)
-        
-        
-        """
-        #if resultsmode == 'Complex results':
-            #self.main_layout.addWidget(wordgroup(self.search_le.text(), response(output).parseresponse(), True))
-       # elif resultsmode == 'Simple results':
-            #self.main_layout.addWidget(wordgroup(self.search_le.text(), output))
-        
-        if resultsmode == "Complex results" :
-            self.main_layout.addWidget(ComplexWordElement(output))
-        else:
-            responses = response(output).parseresponse()
-            wordheader = QWidget()
-            header_layout = QGridLayout()
-            wordheader.setLayout(header_layout)
-            header_layout.addWidget(QLabel(self.search_le.text()), 0, 0)
-
-            contentWidget = QWidget()
-            contentGrid =  QVBoxLayout()
-            contentWidget.setLayout(contentGrid)
-
-            header_layout.addWidget(contentWidget, 1, 0)
-
-            self.main_layout.addWidget(wordheader)
-            for details in responses:
-                contentGrid.addWidget(wordElement(details))"""
-        
+        self.main_layout.addItem(self.spacer)     
 
 class response():
     def __init__(self, responsestr):

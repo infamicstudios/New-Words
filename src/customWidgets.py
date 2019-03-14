@@ -1,3 +1,4 @@
+#TODO: ACTUALLY IMPORT EVERYTHING FROM INSTEAD OF BEING LAZY
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
@@ -11,38 +12,28 @@ def calculateTextSize(string, font):
 
     return boundingBox.width(), boundingBox.height()
 
-class ExpandButton(QToolButton):
-    def __init__(self, parent=None):
-        super(CircleButton, self).__init__(parent)
-        #self.setStyleSheet('''border-image: url("imagen.jpg")''')
-
-    #def resizeEvent(self, event):
-        #self.setMask(QRegion(self.rect(), QRegion.Ellipse))
-        #QToolButton.resizeEvent(self, event)
-
 class definition(QWidget):
     
     def __init__(self, word, response, simple=False, darkmode=False, parent=None):
         super(definition, self).__init__(parent)
-
-        #Get the background color and create a version of it that is slightly darker
-        backgroundcolorHex = self.palette().color(self.backgroundRole()).name()[1:]
-        backgroundcolorHex = tuple(int(int(backgroundcolorHex[i:i+2])/1.1) for i in range(0, len(backgroundcolorHex), 2))
-        backgroundcolorHex = '#'+''.join(str(x) for x in backgroundcolorHex)
-        background_dark = backgroundcolorHex
-        background_light = self.palette().color(self.backgroundRole()).name()
-
-        #  |-----------------definition_header-------------------------|
+        
+        #  Basic widget structure:
+        #  |--------------------definition_header----------------------|
         #  ||----------------|  |------------------|  |--------------| |
         #  ||     Title      |  |  collapsebutton  |  |  CloseButton | |
         #  ||----------------|  |------------------|  |--------------| |
+        #  |----------------------contentWidget------------------------|
+        #  |                                                           |
+        #  |                                                           |
+        #  |                     definitionLabel                       |
+        #  |                                                           |
+        #  |                                                           |
         #  |-----------------------------------------------------------|
-        #  |                                                           |
-        #  |                                                           |
-        #  |                   contentWidget                           |
-        #  |                                                           |
-        #  |                                                           |
-        #  |-----------------------------------------------------------|
+
+        # Get the background color and create a version of it that is slightly darker
+        background_light = self.palette().color(self.backgroundRole()).name()
+        background_dark = background_light[1:]
+        background_dark = '#%02x%02x%02x' % tuple(int(int('0x'+background_dark[i:i+2], 0)/1.1) for i in range(0, len(background_dark), 2))
 
         #The overall layout for the whole widget
         definitionLayout = QGridLayout()
@@ -54,32 +45,34 @@ class definition(QWidget):
         definition_header.setLayout(definition_header_layout)
 
         title = QLabel(word)
-        #Images from https://visualpharm.com/free-icons/collapse%20arrow-595b40b65ba036ed117d1768
-        # and https://visualpharm.com/free-icons/expand%20arrow-595b40b65ba036ed117d1765
+        titlefont = QFont("Arial", 20, True)
+        title.setFont(titlefont)
 
         self.collapsebutton = QToolButton()
         self.collapsebutton.setFixedSize(QSize(30,30))
 
+        #Images from https://visualpharm.com/free-icons/collapse%20arrow-595b40b65ba036ed117d1768
+        # and https://visualpharm.com/free-icons/expand%20arrow-595b40b65ba036ed117d1765
+
         # A nice single liner that defines the path of the CollapseButton Icon based on if using dark mode.
-        collapse_icnpath, expand_icnpath = ['../resources/{type}{ifdark}'.format(ifdark="Dark" if darkmode else '', type="Expand" if i else "Collapse") for i in range(2)]
+        collapse_icnpath, expand_icnpath = ['../resources/{type}{ifdark}'.format(ifdark='Dark' if darkmode else '', type='Expand' if i else 'Collapse') for i in range(2)]
+
+        btnsize = 28 # btnsize % 2 must == 0 for it to properly display
 
         self.expand_icn = QIcon()
-        self.expand_icn.addFile(expand_icnpath)
+        self.expand_icn.addFile(expand_icnpath, QSize(btnsize, btnsize))
         self.collapse_icn = QIcon()
-        self.collapse_icn.addFile(collapse_icnpath)
-        
-        #self.collapsebutton.setIcon(self.collapse_icn)
+        self.collapse_icn.addFile(collapse_icnpath, QSize(btnsize, btnsize))
 
         self.collapsebutton.setStyleSheet(
-            'QToolButton {'
-                'background-color:'+background_dark+';'
-                'border-radius: 15px;' # Must be half the buttonsize
+            'QToolButton { background-color:'+background_dark+';'
+                'border-radius:'+str(btnsize/2)+';' # Must be half the buttonsize 
             '}'
             'QToolButton:hover {'
                 'background-color:'+background_dark+';'
-                'border: 1px solid blue;'
+                'border: 1px solid 	#0087BD;' 
             '}')
-        self.collapsebutton.setToolTip("Show the details of this word")
+        self.collapsebutton.setToolTip('Show the details of this word')
         self.collapsebutton.clicked.connect(self.showDetails)
 
         closebutton = QPushButton('X')
@@ -93,7 +86,7 @@ class definition(QWidget):
                 'background-color:'+background_dark+';'
                 'border: 1px solid red;'
             '}')
-        closebutton.setToolTip("Remove")
+        closebutton.setToolTip('Remove')
         closebutton.clicked.connect(self.remove)
 
         definition_header_layout.addWidget(title, Qt.AlignLeft)
@@ -101,44 +94,35 @@ class definition(QWidget):
         definition_header_layout.addWidget(closebutton,Qt.AlignRight)
 
         definitionLayout.addWidget(definition_header)
-
         # END OF HEADER
 
         # CREATE CONTENT WIDGET
-        self.contentWidget = QWidget()
-        contentlayout = QVBoxLayout()
-        contentlayout.setSpacing(0)
-        self.contentWidget.setLayout(contentlayout)
-        self.contentWidget.setStyleSheet("background-color:{darkerbackground};".format(darkerbackground=backgroundcolorHex))
+
+        # For now always assume complex results
+        self.contentWidget = QLabel(response.rstrip('\r\n'))
+        self.contentWidget.setStyleSheet('padding: 10px; border-radius: 7px; background-color:{bg_dark};'.format(bg_dark=background_dark))
 
         # Hide the definition based on setting choice
         if not settings.showdefinitions:
             self.contentWidget.hide()
     
-        definitionLayout.addWidget(self.contentWidget, 1, 0)
-
-
-
         if self.contentWidget.isHidden():
             self.collapsebutton.setIcon(self.expand_icn)
         else:
             self.collapsebutton.setIcon(self.collapse_icn)
 
-        # For now always assume complex results
-        definitionLabel = QLabel(response)
-        contentlayout.addWidget(definitionLabel)
+        definitionLayout.addWidget(self.contentWidget, 1, 0)
 
     #Function that runs when the user expands on collapses the word details
     def showDetails(self):
         if self.contentWidget.isHidden():
             self.contentWidget.show()
             self.collapsebutton.setIcon(self.collapse_icn)
-        
-            self.collapsebutton.setToolTip("Collapse") 
+            self.collapsebutton.setToolTip('Collapse') 
         else:
             self.contentWidget.hide()
             self.collapsebutton.setIcon(self.expand_icn)
-            self.collapsebutton.setToolTip("Expand") 
+            self.collapsebutton.setToolTip('Expand') 
         
     def remove(self):
         self.setParent(None)
@@ -152,14 +136,6 @@ class wordElement(QWidget):
 
         word_details_key = ['stem', 'ending', 'code1', 'code2', 'form1',
         'form2', 'form3', 'case', 'number', 'tense', 'gender', 'interpretation']
-
-        #Fill in any parts of the dict that were not defined when pasing,
-        #for x in word_details_key:
-            #try:
-                #temp = word_details[x]
-            #except KeyError:
-                #word_details[x] = None
-                
 
         ######### SET VARIABLE VALUE BY READING THE DICT #########
         self.stem = word_details['stem']
