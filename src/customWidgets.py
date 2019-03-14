@@ -3,6 +3,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 import os.path
 import tooltips
+import settings
 
 def calculateTextSize(string, font):
     metrics = QFontMetrics(font)
@@ -20,6 +21,7 @@ class ExpandButton(QToolButton):
         #QToolButton.resizeEvent(self, event)
 
 class definition(QWidget):
+    
     def __init__(self, word, response, simple=False, darkmode=False, parent=None):
         super(definition, self).__init__(parent)
 
@@ -48,9 +50,8 @@ class definition(QWidget):
 
         # A header containing the word and expand/collapse and close buttons
         definition_header = QWidget()
-        definition_header_layout= QGridLayout()
+        definition_header_layout = QHBoxLayout()
         definition_header.setLayout(definition_header_layout)
-        
 
         title = QLabel(word)
         #Images from https://visualpharm.com/free-icons/collapse%20arrow-595b40b65ba036ed117d1768
@@ -58,25 +59,35 @@ class definition(QWidget):
 
         self.collapsebutton = QToolButton()
         self.collapsebutton.setFixedSize(QSize(30,30))
-        self.collapsebutton.setIcon(QIcon('../resources/Collapse.svg'))
+
+        # A nice single liner that defines the path of the CollapseButton Icon based on if using dark mode.
+        collapse_icnpath, expand_icnpath = ['../resources/{type}{ifdark}'.format(ifdark="Dark" if darkmode else '', type="Expand" if i else "Collapse") for i in range(2)]
+
+        self.expand_icn = QIcon()
+        self.expand_icn.addFile(expand_icnpath)
+        self.collapse_icn = QIcon()
+        self.collapse_icn.addFile(collapse_icnpath)
+        
+        #self.collapsebutton.setIcon(self.collapse_icn)
+
         self.collapsebutton.setStyleSheet(
             'QToolButton {'
                 'background-color:'+background_dark+';'
-                'border-radius: 15px;'
+                'border-radius: 15px;' # Must be half the buttonsize
             '}'
             'QToolButton:hover {'
                 'background-color:'+background_dark+';'
-                'border: 1px solid green;'
+                'border: 1px solid blue;'
             '}')
         self.collapsebutton.setToolTip("Show the details of this word")
         self.collapsebutton.clicked.connect(self.showDetails)
 
         closebutton = QPushButton('X')
-        closebutton.setFixedSize(QSize(30,30))
+        closebutton.setFixedSize(QSize(28,28))
         closebutton.setStyleSheet(
             'QPushButton {'
                 'background-color:'+background_dark+';'
-                'border-radius: 15px;'
+                'border-radius: 14px;' # Must be half the buttonsize
             '}'
             'QPushButton:hover {'
                 'background-color:'+background_dark+';'
@@ -85,38 +96,48 @@ class definition(QWidget):
         closebutton.setToolTip("Remove")
         closebutton.clicked.connect(self.remove)
 
-        definition_header_layout.addWidget(title, 0, 0, Qt.AlignLeft)
-        definition_header_layout.addWidget(self.collapsebutton, 0, 1, Qt.AlignRight)
-        #definition_header_layout.addWidget(optionsbutton, 0, 2, Qt.AlignRight)
-        definition_header_layout.addWidget(closebutton, 0, 3, Qt.AlignRight)
+        definition_header_layout.addWidget(title, Qt.AlignLeft)
+        definition_header_layout.addWidget(self.collapsebutton, Qt.AlignRight)
+        definition_header_layout.addWidget(closebutton,Qt.AlignRight)
 
         definitionLayout.addWidget(definition_header)
 
         # END OF HEADER
 
-        # The Widget containing the actual definition 
+        # CREATE CONTENT WIDGET
         self.contentWidget = QWidget()
-        self.contentWidget.setStyleSheet("background-color:{darkerbackground};".format(darkerbackground=backgroundcolorHex))
-        
-        contentlayout = QGridLayout()
+        contentlayout = QVBoxLayout()
         contentlayout.setSpacing(0)
         self.contentWidget.setLayout(contentlayout)
+        self.contentWidget.setStyleSheet("background-color:{darkerbackground};".format(darkerbackground=backgroundcolorHex))
+
+        # Hide the definition based on setting choice
+        if not settings.showdefinitions:
+            self.contentWidget.hide()
+    
         definitionLayout.addWidget(self.contentWidget, 1, 0)
+
+
+
+        if self.contentWidget.isHidden():
+            self.collapsebutton.setIcon(self.expand_icn)
+        else:
+            self.collapsebutton.setIcon(self.collapse_icn)
 
         # For now always assume complex results
         definitionLabel = QLabel(response)
-        contentlayout.addWidget(definitionLabel, 0, 0)
+        contentlayout.addWidget(definitionLabel)
 
     #Function that runs when the user expands on collapses the word details
     def showDetails(self):
         if self.contentWidget.isHidden():
             self.contentWidget.show()
-            self.collapsebutton.setIcon(QIcon('../resources/Collapse.svg'))
+            self.collapsebutton.setIcon(self.collapse_icn)
         
             self.collapsebutton.setToolTip("Collapse") 
         else:
             self.contentWidget.hide()
-            self.collapsebutton.setIcon(QIcon('../resources/Expand.svg'))
+            self.collapsebutton.setIcon(self.expand_icn)
             self.collapsebutton.setToolTip("Expand") 
         
     def remove(self):

@@ -101,7 +101,7 @@ class App(QMainWindow):
         command = ['./words', word] if searchtype == 'Latin to English' else ['./words', '-E', word]
         output = subprocess.check_output(command, cwd = '../resources/words/').decode("utf-8")
         
-        definition_entry = definition(self.search_le.text(), output)
+        definition_entry = definition(self.search_le.text(), output, darkmode=self.DarkMode)
         self.main_layout.insertWidget(0, definition_entry)
 
         # Have to re-add the spacer to the bottom.

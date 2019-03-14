@@ -4,3 +4,4 @@ left = 10
 width = 500
 height = 100
 platform = 'darwin'
+showdefinitions = False
