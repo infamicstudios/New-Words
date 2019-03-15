@@ -104,13 +104,40 @@ class App(QMainWindow):
         word = ''+self.search_le.text()
         command = ['./words', word] if searchtype == 'Latin to English' else ['./words', '-E', word]
         output = subprocess.check_output(command, cwd = '../resources/words/').decode("utf-8")
+
         
-        definition_entry = definition(self.search_le.text(), output, darkmode=self.DarkMode)
-        self.main_layout.insertWidget(0, definition_entry)
+        definition_entry = definition(word, output, darkmode=self.DarkMode)
+
+        # Check if the word is a duplicate of a word in the history
+        # And if it is display a prompt asking about researching
+        duplicate = False
+        for entrynum in range(self.main_layout.count()):
+            dictionaryentry = self.main_layout.itemAt(entrynum)
+            if type(dictionaryentry) != QSpacerItem:
+                dictionaryentry = dictionaryentry.widget()
+                labels = dictionaryentry.findChildren(QLabel)[0]
+                if labels.text() == word and not duplicate:
+                    msg = QMessageBox()
+                    msg.setText('This search matchs a word already in the history. Do you still wanna search for the word?')
+                    msg.setWindowTitle('Duplicate warning')
+                    msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+                    #msg.buttonClicked.connect(self.buttonpressed)
+                    retval = msg.exec_()
+                    if retval == QMessageBox.Yes:
+                        duplicate = False
+                    if retval == QMessageBox.No:
+                        duplicate = True
+                    break
+        
+        if not duplicate:
+            self.main_layout.insertWidget(0, definition_entry)
 
         # Have to re-add the spacer to the bottom.
         self.main_layout.removeItem(self.spacer)
-        self.main_layout.addItem(self.spacer)     
+        self.main_layout.addItem(self.spacer)    
+
+    def buttonpressed(self, value):
+        return False if value.text() == 'Yes' else True
 
 class response():
     def __init__(self, responsestr):

@@ -45,6 +45,7 @@ class definition(QWidget):
         definition_header.setLayout(definition_header_layout)
 
         title = QLabel(word)
+        #print(title.name)
         titlefont = QFont("Arial", 20, True)
         title.setFont(titlefont)
 
@@ -331,73 +332,3 @@ class ButtonLineEdit(QLineEdit):
 
     def showclearbutton(self):
         self.clearbutton.show() if len(self.text()) > 0 else self.clearbutton.hide()
-    
-    
-
-"""class WordDefinition(QWidget):
-
-    def __init__(self, word, definition, darkmode=False, parent=None):
-        super(WordDefinition, self).__init__(parent)
-
-        
-
-        # Three layouts are used here, One primary vertical layout 
-        # main_layout that contains the other two layouts. Within 
-        # main_layout is closed_layout and expanded_layout.
-        # closed_layout is essentially a tree header containing
-        # the definition of the word and a button to expand and 
-        # display expanded_layout. expanded_layout contains the other 
-        # details of the word (inflections, gender, age etc).
-
-        main_layout = QGridLayout(self)
-
-        self.setAttribute(Qt.WA_DeleteOnClose)
-
-        word_label= QLabel(word+':')
-        word_label.setFont(QFont("Arial", 16))  
-        main_layout.addWidget(word_label, 0, 0, Qt.AlignLeft)
-
-        self.expand_btn = QPushButton('↓', None)
-        self.expand_btn.clicked.connect(self.toggleDetails)
-        main_layout.addWidget(self.expand_btn, 0, 1, Qt.AlignRight)
-
-        delete_btn = QPushButton('x', None)
-        delete_btn.clicked.connect(self.delete)
-        main_layout.addWidget(delete_btn, 0, 2, Qt.AlignRight)
-
-        definition_label = QLabel(str(definition['senses']))
-        definition_label.setFont(QFont("Arial", 12))
-        main_layout.addWidget(definition_label, 1, 0, (Qt.AlignLeft | Qt.AlignTop))
-
-        
-        expanded_layout = QGridLayout()
-        word_part_label1 = QLabel('Forms: %s' % (definition['orth']) )
-        word_part_label2 = QLabel('Most Common Inflection: %s' %(definition['infls'][0]))
-        search_for_sentance_btn = QPushButton('See example sentance', None)
-
-        expanded_layout.addWidget(word_part_label1, 0, 0, (Qt.AlignLeft | Qt.AlignTop))
-        expanded_layout.addWidget(word_part_label2, 1, 0, (Qt.AlignLeft | Qt.AlignTop))
-        expanded_layout.addWidget(search_for_sentance_btn, 2, 0, (Qt.AlignLeft | Qt.AlignTop))
-
-        self.expanded_widget = QWidget()
-        self.expanded_widget.setLayout(expanded_layout)
-        self.expanded_widget.hide()
-
-        main_layout.addWidget(self.expanded_widget, 2, 0, (Qt.AlignLeft | Qt.AlignTop))
-
-    # Toggle the visibility of the extra details of the word.
-    def toggleDetails(self):
-        
-        # If visible
-        if self.expanded_widget.isVisible():
-            self.expanded_widget.hide()
-            self.expand_btn.setText('↓')
-
-        # If hidden
-        else:
-            self.expanded_widget.show()
-            self.expand_btn.setText('↑')
-    def delete(self):
-        self.close()"""
-        
-
