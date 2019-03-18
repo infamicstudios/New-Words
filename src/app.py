@@ -3,7 +3,7 @@ import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
-from customWidgets import ButtonLineEdit, wordElement, ComplexWordElement, toolbarDropdowns, definition
+from customWidgets import ButtonLineEdit, wordElement, ComplexWordElement, toolbarDropdowns, definition, HistoryHeader, History
 import subprocess
 import regex as re
 import settings
@@ -61,18 +61,35 @@ class App(QMainWindow):
 
         # Create and configure the body container of the widget
         self.scroll_area = QScrollArea()
-        self.center_container = QWidget()
+        self.main_container = QWidget()
         self.main_layout = QVBoxLayout()
-        self.center_container.setLayout(self.main_layout)
-        
+        self.main_container.setLayout(self.main_layout)
 
-        self.scroll_area.setWidget(self.center_container)
+        self.current_def = QWidget()
+        self.current_def_layout = QVBoxLayout()
+        self.current_def.setLayout(self.current_def_layout)
+
+        
+        #self.history_container = QWidget()
+        #self.history_layout = QVBoxLayout()
+        #self.history_container.setLayout(self.history_layout)
+        #self.history_layout.insertWidget(0, HistoryHeader())
+        self.history = History()
+        self.history_layout = self.history.layout
+
+        self.main_layout.addWidget(self.current_def)
+        #self.main_layout.addWidget(self.history_container)
+
+        self.main_layout.addWidget(self.history)
+
+
+        self.scroll_area.setWidget(self.main_container)
         self.scroll_area.setWidgetResizable(True)
 
         self.setCentralWidget(self.scroll_area)
         
 
-        recommendedSize = self.center_container.sizeHint()
+        recommendedSize = self.main_container.sizeHint()
         self.spacer = QSpacerItem(recommendedSize.width(), recommendedSize.height(), QSizePolicy.Minimum, QSizePolicy.Expanding)
         self.main_layout.addItem(self.spacer)
 
@@ -85,6 +102,7 @@ class App(QMainWindow):
         
     def change_results_mode(self, value):
         self.resultsmode = value
+
     def change_search_type(self, value):
         # Because simple mode for English to Latin is not supported,
         # automatically swap the user over to complex mode on change
@@ -105,39 +123,44 @@ class App(QMainWindow):
         command = ['./words', word] if searchtype == 'Latin to English' else ['./words', '-E', word]
         output = subprocess.check_output(command, cwd = '../resources/words/').decode("utf-8")
 
-        
         definition_entry = definition(word, output, darkmode=self.DarkMode)
 
         # Check if the word is a duplicate of a word in the history
         # And if it is display a prompt asking about researching
         duplicate = False
-        for entrynum in range(self.main_layout.count()):
-            dictionaryentry = self.main_layout.itemAt(entrynum)
+        for entrynum in range(self.history_layout.count()):
+            dictionaryentry = self.history_layout.itemAt(entrynum)
+
             if type(dictionaryentry) != QSpacerItem:
+
                 dictionaryentry = dictionaryentry.widget()
                 labels = dictionaryentry.findChildren(QLabel)[0]
+
                 if labels.text() == word and not duplicate:
                     msg = QMessageBox()
-                    msg.setText('This search matchs a word already in the history. Do you still wanna search for the word?')
                     msg.setWindowTitle('Duplicate warning')
-                    msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-                    #msg.buttonClicked.connect(self.buttonpressed)
+                    msg.setText('Search matchs words in history.'
+                                'Search for the word?')
+                    msg.setStandardButtons(QMessageBox.Yes|QMessageBox.No)
                     retval = msg.exec_()
-                    if retval == QMessageBox.Yes:
-                        duplicate = False
-                    if retval == QMessageBox.No:
-                        duplicate = True
+
+                    duplicate = False if retval == QMessageBox.Yes else True
                     break
         
+        # Move previous entry from the current definition to the history 
         if not duplicate:
-            self.main_layout.insertWidget(0, definition_entry)
+            if self.current_def_layout.count() != 0:
+                previous_definition = self.current_def_layout.itemAt(0).widget()
+                self.history_layout.insertWidget(1, previous_definition)
+                self.current_def_layout.removeWidget(previous_definition)
+            self.current_def_layout.insertWidget(0, definition_entry)
 
-        # Have to re-add the spacer to the bottom.
-        self.main_layout.removeItem(self.spacer)
-        self.main_layout.addItem(self.spacer)    
+        def SetClicked(value, event):
+            print(value)
 
     def buttonpressed(self, value):
         return False if value.text() == 'Yes' else True
+    
 
 class response():
     def __init__(self, responsestr):

@@ -6,6 +6,8 @@ import os.path
 import tooltips
 import settings
 
+
+
 def calculateTextSize(string, font):
     metrics = QFontMetrics(font)
     boundingBox = metrics.boundingRect(string)
@@ -13,7 +15,6 @@ def calculateTextSize(string, font):
     return boundingBox.width(), boundingBox.height()
 
 class definition(QWidget):
-    
     def __init__(self, word, response, simple=False, darkmode=False, parent=None):
         super(definition, self).__init__(parent)
         
@@ -34,6 +35,7 @@ class definition(QWidget):
         background_light = self.palette().color(self.backgroundRole()).name()
         background_dark = background_light[1:]
         background_dark = '#%02x%02x%02x' % tuple(int(int('0x'+background_dark[i:i+2], 0)/1.1) for i in range(0, len(background_dark), 2))
+        self.selected = False
 
         #The overall layout for the whole widget
         definitionLayout = QGridLayout()
@@ -93,6 +95,7 @@ class definition(QWidget):
         definition_header_layout.addWidget(title, Qt.AlignLeft)
         definition_header_layout.addWidget(self.collapsebutton, Qt.AlignRight)
         definition_header_layout.addWidget(closebutton,Qt.AlignRight)
+        
 
         definitionLayout.addWidget(definition_header)
         # END OF HEADER
@@ -114,6 +117,7 @@ class definition(QWidget):
 
         definitionLayout.addWidget(self.contentWidget, 1, 0)
 
+
     #Function that runs when the user expands on collapses the word details
     def showDetails(self):
         if self.contentWidget.isHidden():
@@ -128,8 +132,80 @@ class definition(QWidget):
     def remove(self):
         self.setParent(None)
 
-    
+class HistoryHeader(QWidget):
+    def __init__(self, darkmode=False, parent=None): 
+        super(HistoryHeader, self).__init__(parent)
 
+        
+        #header = QWidget()
+        header_layout = QHBoxLayout()
+        self.setLayout(header_layout)
+
+        title = QLabel('History')
+
+        seperator = QFrame()
+        seperator.setFrameShape(QFrame.HLine)
+        seperator.setFrameShadow(QFrame.Sunken)
+
+        header_layout.addWidget(title)
+        header_layout.addWidget(seperator)
+
+class History(QWidget):
+    def __init__(self, darkmode=False, parent=None): 
+        super(History, self).__init__(parent)
+
+        self.layout = QVBoxLayout(self)
+        #self.setlayout(self.layout)
+
+        self.header = QWidget()
+        self.header_layout = QHBoxLayout()
+        #header_layout.setContentsMargins(0,0,0,0)
+        self.header.setLayout(self.header_layout)
+
+        background_dark = self.palette().color(self.backgroundRole()).name()
+        background_light = background_dark[1:]
+        background_dark = '#%02x%02x%02x' % tuple(int(int('0x'+background_light[i:i+2], 0)/1.1) for i in range(0, len(background_light), 2))
+        background_light = '#%02x%02x%02x' % tuple(int(int('0x'+background_light[i:i+2], 0)/.9) for i in range(0, len(background_light), 2))
+        #print(background_dark)
+        #print(background_light)
+        title = QLabel('History')
+        titlefont = QFont('Arial', 25, True)
+        title.setFont(titlefont)
+
+        seperator = QFrame()
+        seperator.setFrameShape(QFrame.HLine)
+        seperator.setFrameShadow(QFrame.Sunken)
+        clear_button = QPushButton('Clear'
+        )
+        clear_button.setFixedSize(QSize(40,22))
+
+        clear_button.setStyleSheet(
+            'QPushButton {' 
+                'border-radius: 5px;'
+                'background-color:'+background_dark+';'
+            '}'
+            'QPushButton:hover {'
+                'border-radius: 5px;'
+                'background-color:'+background_light+';'
+            '}')
+        clear_button.clicked.connect(self.clear_history)
+        self.header_layout.addWidget(title)
+        self.header_layout.addWidget(seperator, Qt.AlignCenter)
+        self.header_layout.addWidget(clear_button, Qt.AlignRight)
+
+        self.layout.insertWidget(0, self.header)
+    
+    def clear_history(self):
+        for widgetindex in range(self.layout.count()-1):
+            widgetitem = self.layout.itemAt(widgetindex)
+            widget_elem = widgetitem.widget()
+            if widget_elem != None:
+                #widgetelem = self.layout.itemAt(widgetindex)
+                self.layout.removeWidget(widget_elem)
+        self.layout.insertWidget(0, self.header)
+
+
+        
 
 class wordElement(QWidget):
     def __init__(self, word_details, darkmode=False, parent=None): 
