@@ -5,6 +5,7 @@ from PyQt5.QtCore import *
 import os.path
 import tooltips
 import settings
+import regex as re
 
 
 
@@ -45,10 +46,10 @@ class definition(QWidget):
         definition_header = QWidget()
         definition_header_layout = QHBoxLayout()
         definition_header.setLayout(definition_header_layout)
-
+        self.word = word
         title = QLabel(word)
         #print(title.name)
-        titlefont = QFont("Arial", 20, True)
+        titlefont = QFont("Helvetica", 20, True)
         title.setFont(titlefont)
 
         self.collapsebutton = QToolButton()
@@ -90,11 +91,26 @@ class definition(QWidget):
                 'border: 1px solid red;'
             '}')
         closebutton.setToolTip('Remove')
+
+        detailsButton = QPushButton('...')
+        detailsButton.setFixedSize(QSize(28,28))
+        detailsButton.setStyleSheet(
+            'QPushButton {'
+                'background-color:'+background_dark+';'
+                'border-radius: 14px;' # Must be half the buttonsize
+            '}'
+            'QPushButton:hover {'
+                'background-color:'+background_dark+';'
+                'border: 1px solid red;'
+            '}')
+
+        detailsButton.clicked.connect(self.findExampleSentance)
         closebutton.clicked.connect(self.remove)
 
         definition_header_layout.addWidget(title, Qt.AlignLeft)
         definition_header_layout.addWidget(self.collapsebutton, Qt.AlignRight)
         definition_header_layout.addWidget(closebutton,Qt.AlignRight)
+        definition_header_layout.addWidget(detailsButton,Qt.AlignRight)
         
 
         definitionLayout.addWidget(definition_header)
@@ -103,7 +119,29 @@ class definition(QWidget):
         # CREATE CONTENT WIDGET
 
         # For now always assume complex results
-        self.contentWidget = QLabel(response.rstrip('\r\n'))
+        response = response.rstrip('\r\n')
+        
+        # Highlight translations
+        if settings.definition_highlighting:
+            responseDef = re.findall("(.+)[;]", response)
+            highlightStyle = {'bold':'b', 'italics':'i', 'normal':'', 'b':'b', 'i':'i'}
+            style_letter = highlightStyle[settings.definition_hl_style.lower()]
+            hl_color = '#C0C0C0' if settings.definition_hl_clr == None else settings.definition_hl_clr
+            for word_form_def in responseDef:
+                response = response.replace(word_form_def+';', 
+                '<font color={hl_color}><{style_lttr}>{translation}</{style_lttr}></font>'.format(
+                hl_color=hl_color, style_lttr=style_letter,
+                translation=word_form_def))
+
+            # This works for some reason
+            response = '<br>'.join(response.splitlines())
+        
+        
+        print(response)
+            #response = ''.join()
+        self.contentWidget = QLabel(response)
+        #self.contentWidget.setText()
+        #self.contentWidget.setFont(QFont('Arial', 13, True))
         self.contentWidget.setStyleSheet('padding: 10px; border-radius: 7px; background-color:{bg_dark};'.format(bg_dark=background_dark))
 
         # Hide the definition based on setting choice
@@ -131,24 +169,16 @@ class definition(QWidget):
         
     def remove(self):
         self.setParent(None)
+    def findExampleSentance(self):
+        #TODO: Optimize as currently this is super slow
+        with open('../textsamples/corpus.txt') as corpus:
+            filetext = corpus.read()
+            sentances = [s+ '.' for s in filetext.split('.') if self.word in s]
+            sentance = min(sentances)
+        print(sentance)
 
-class HistoryHeader(QWidget):
-    def __init__(self, darkmode=False, parent=None): 
-        super(HistoryHeader, self).__init__(parent)
 
-        
-        #header = QWidget()
-        header_layout = QHBoxLayout()
-        self.setLayout(header_layout)
 
-        title = QLabel('History')
-
-        seperator = QFrame()
-        seperator.setFrameShape(QFrame.HLine)
-        seperator.setFrameShadow(QFrame.Sunken)
-
-        header_layout.addWidget(title)
-        header_layout.addWidget(seperator)
 
 class History(QWidget):
     def __init__(self, darkmode=False, parent=None): 
@@ -166,27 +196,37 @@ class History(QWidget):
         background_light = background_dark[1:]
         background_dark = '#%02x%02x%02x' % tuple(int(int('0x'+background_light[i:i+2], 0)/1.1) for i in range(0, len(background_light), 2))
         background_light = '#%02x%02x%02x' % tuple(int(int('0x'+background_light[i:i+2], 0)/.9) for i in range(0, len(background_light), 2))
-        #print(background_dark)
-        #print(background_light)
+        
+        
         title = QLabel('History')
-        titlefont = QFont('Arial', 25, True)
-        title.setFont(titlefont)
+        title.setFont(
+            QFont(settings.history_header_font, 
+            settings.history_title_fntsize, 
+            True))
 
         seperator = QFrame()
-        seperator.setFrameShape(QFrame.HLine)
-        seperator.setFrameShadow(QFrame.Sunken)
-        clear_button = QPushButton('Clear'
-        )
-        clear_button.setFixedSize(QSize(40,22))
+        seperator.setFrameStyle(QFrame.HLine | QFrame.Plain)
 
+        clear_button = QPushButton('Clear')
+        clear_button.setFont(
+            QFont(settings.history_header_font,
+            settings.history_clearbtn_fntsize,
+            True))
+        clear_button.setFixedSize(QSize(40,24))
+        #TODO: make it so the tooltip shows the number of entries. 
+        numentries = 1
+        clear_button.setToolTip("Entries: %s" %(numentries))
+        
         clear_button.setStyleSheet(
             'QPushButton {' 
                 'border-radius: 5px;'
                 'background-color:'+background_dark+';'
+                'color:'+settings.history_clearbtn_fntcolor+';'
             '}'
             'QPushButton:hover {'
                 'border-radius: 5px;'
                 'background-color:'+background_light+';'
+                'color:'+settings.history_clearbtn_fntcolor+';'
             '}')
         clear_button.clicked.connect(self.clear_history)
         self.header_layout.addWidget(title)
@@ -196,13 +236,15 @@ class History(QWidget):
         self.layout.insertWidget(0, self.header)
     
     def clear_history(self):
-        for widgetindex in range(self.layout.count()-1):
-            widgetitem = self.layout.itemAt(widgetindex)
-            widget_elem = widgetitem.widget()
-            if widget_elem != None:
+        print("cleared")
+        #TODO: Implement a feature to clear the history
+        #for widgetindex in range(self.layout.count()-1):
+            #widgetitem = self.layout.itemAt(widgetindex)
+            #widget_elem = widgetitem.widget()
+            #if widget_elem != None:
                 #widgetelem = self.layout.itemAt(widgetindex)
-                self.layout.removeWidget(widget_elem)
-        self.layout.insertWidget(0, self.header)
+                #self.layout.removeWidget(widget_elem)
+        #self.layout.insertWidget(0, self.header)
 
 
         

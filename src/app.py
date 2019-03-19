@@ -3,7 +3,7 @@ import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
-from customWidgets import ButtonLineEdit, wordElement, ComplexWordElement, toolbarDropdowns, definition, HistoryHeader, History
+from customWidgets import ButtonLineEdit, wordElement, ComplexWordElement, toolbarDropdowns, definition, History
 import subprocess
 import regex as re
 import settings
@@ -151,6 +151,8 @@ class App(QMainWindow):
         if not duplicate:
             if self.current_def_layout.count() != 0:
                 previous_definition = self.current_def_layout.itemAt(0).widget()
+                if not previous_definition.contentWidget.isHidden():
+                    previous_definition.contentWidget.hide()
                 self.history_layout.insertWidget(1, previous_definition)
                 self.current_def_layout.removeWidget(previous_definition)
             self.current_def_layout.insertWidget(0, definition_entry)
